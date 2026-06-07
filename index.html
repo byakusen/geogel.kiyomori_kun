@@ -160,8 +160,6 @@
     letter-spacing:.02em;
   }
   .scroll .answer .em{color:var(--aka-fuka);font-weight:700;}
-  .cursor{display:inline-block;width:.5em;background:var(--aka);animation:blink .7s steps(1) infinite;}
-  @keyframes blink{50%{opacity:0}}
 
   /* 質問エリア */
   .ask-zone{
@@ -948,18 +946,13 @@ function speak(text){
   startMouth();                 // しゃべりはじめ：口を動かす
   answerEl.innerHTML="";
   let i=0;
-  const cursor=document.createElement('span');
-  cursor.className='cursor'; cursor.textContent='　';
-  answerEl.appendChild(cursor);
   typing=setInterval(()=>{
     if(i>=text.length){
       clearInterval(typing); typing=null;
-      cursor.remove();
       stopMouth();              // しゃべりおわり：口を止める
       return;
     }
-    const ch=document.createTextNode(text[i]);
-    answerEl.insertBefore(ch,cursor);
+    answerEl.appendChild(document.createTextNode(text[i]));
     i++;
   },32);
 }
