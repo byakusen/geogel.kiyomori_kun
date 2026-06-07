@@ -103,15 +103,26 @@
     border:5px solid var(--kin);
     box-shadow:0 0 0 4px var(--sumi),0 10px 30px rgba(0,0,0,.5);
     position:relative;
-    transition:transform .25s;
   }
-  .face img{
-    width:100%;height:100%;
+  /* 口（顔）の絵。閉じた絵と開いた絵を、ぴったり同じ位置に重ねる */
+  .face .mouth{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
     object-fit:cover;
     display:block;
   }
+  /* 閉じた口の絵 … いつも見えている（下にしく） */
+  .face .mouth.closed{ z-index:1; }
+  /* 開いた口の絵 … ふだんは透明で見えない。上に重ねておく */
+  .face .mouth.open{ z-index:2; opacity:0; }
+  /* 「talking-open」がついた瞬間だけ、開いた口の絵が見える（揺れなし・口だけ動く） */
+  .face.talking-open .mouth.open{ opacity:1; }
+
   .face-fallback{
     display:none;
+    position:absolute;inset:0;z-index:3;
     width:100%;height:100%;
     align-items:center;justify-content:center;
     font-family:'Yuji Syuku',serif;
@@ -119,9 +130,8 @@
     color:var(--kin-akarui);letter-spacing:.05em;
     background:radial-gradient(circle at 50% 38%, #3a2d4a, #16121c);
   }
+  .face.no-img .mouth{ display:none; }
   .face.no-img .face-fallback{display:flex;}
-  .face.talk{animation:nod .6s ease;}
-  @keyframes nod{0%,100%{transform:translateY(0)}30%{transform:translateY(6px) rotate(-2deg)}60%{transform:translateY(0) rotate(2deg)}}
   .name-tag{
     margin-top:10px;font-family:'Yuji Syuku',serif;
     font-size:clamp(16px,2vw,24px);color:var(--kin-akarui);letter-spacing:.1em;
@@ -256,6 +266,68 @@
   .btn-next:active{transform:translateY(4px);box-shadow:0 1px 0 #4d141b;}
   .hidden{display:none !important;}
 
+  /* 平氏一族ずかん（家系図） */
+  .zukan-zone, .nenpyo-zone{
+    background:rgba(33,26,42,.7);
+    border:2px solid var(--kin);
+    border-radius:14px;
+    padding:18px 20px;
+  }
+  .zone-lead{font-size:clamp(14px,1.6vw,19px);color:var(--kin-akarui);font-weight:700;letter-spacing:.06em;margin-bottom:14px;}
+  .zukan-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+    gap:12px;
+  }
+  .person{
+    font-family:'Zen Maru Gothic',sans-serif;
+    text-align:center;padding:14px 8px;border-radius:12px;cursor:pointer;
+    background:var(--washi);color:var(--sumi);
+    border:3px solid transparent;
+    transition:transform .12s,border-color .12s;
+  }
+  .person:hover{border-color:var(--kin);transform:translateY(-3px);}
+  .person.on{border-color:var(--aka);background:#f3e6cf;}
+  .person .pname{font-weight:700;font-size:clamp(16px,1.9vw,21px);}
+  .person .prel{font-size:clamp(12px,1.4vw,15px);color:var(--aka-fuka);margin-top:4px;letter-spacing:.04em;}
+  .person.genji{background:#e7eef4;}
+  .person.genji .prel{color:#2a4a6b;}
+
+  /* 栄えとほろび 年表 */
+  .nenpyo-line{
+    display:flex;flex-direction:column;gap:0;position:relative;
+    padding-left:14px;
+  }
+  .ev{
+    display:flex;gap:14px;cursor:pointer;padding:10px 8px;border-radius:10px;
+    border:2px solid transparent;transition:background .12s,border-color .12s;
+    align-items:flex-start;
+  }
+  .ev:hover{background:rgba(244,234,214,.06);border-color:var(--kin);}
+  .ev.on{background:rgba(168,50,58,.18);border-color:var(--aka);}
+  .ev .yr{
+    flex:0 0 auto;width:74px;text-align:right;
+    font-family:'Yuji Syuku',serif;font-size:clamp(15px,1.8vw,21px);
+    color:var(--kin-akarui);
+  }
+  .ev .dot{
+    flex:0 0 auto;width:16px;height:16px;border-radius:50%;margin-top:4px;
+    border:3px solid var(--washi);
+  }
+  .ev.up .dot{background:var(--kin);}      /* 栄え */
+  .ev.down .dot{background:var(--aka);}     /* おとろえ */
+  .ev .ev-title{
+    font-family:'Zen Maru Gothic',sans-serif;font-weight:700;
+    font-size:clamp(16px,1.9vw,22px);color:var(--washi);padding-top:1px;
+  }
+  .nenpyo-legend{
+    display:flex;gap:18px;justify-content:center;margin-top:14px;
+    font-size:clamp(12px,1.4vw,15px);color:var(--sumi-usu);
+  }
+  .nenpyo-legend .lg{display:inline-flex;align-items:center;gap:6px;}
+  .nenpyo-legend .sw{width:13px;height:13px;border-radius:50%;display:inline-block;}
+  .sw.up{background:var(--kin);} .sw.down{background:var(--aka);}
+
   footer{
     position:relative;z-index:2;text-align:center;
     font-size:13px;color:rgba(244,234,214,.4);
@@ -284,8 +356,13 @@
     <div class="stage">
       <div class="kiyomori">
         <div class="face" id="face">
-          <img src="https://github.com/byakusen/geogel.kiyomori_kun/blob/main/kiyomori_kun.png?raw=true" alt="平清盛"
-               onerror="this.style.display='none';this.parentNode.classList.add('no-img');">
+          <img class="mouth closed"
+               src="https://github.com/byakusen/geogel.kiyomori_kun/blob/main/kiyomori3.png?raw=true"
+               alt="平清盛（口を閉じた絵）"
+               onerror="this.closest('.face').classList.add('no-img');">
+          <img class="mouth open"
+               src="https://github.com/byakusen/geogel.kiyomori_kun/blob/main/kiyomori4.png?raw=true"
+               alt="" aria-hidden="true">
           <span class="face-fallback">平<br>清<br>盛</span>
         </div>
         <div class="name-tag">平清盛</div>
@@ -298,6 +375,8 @@
     <div class="mode-tabs">
       <button class="mode-tab active" id="tabAsk">きく</button>
       <button class="mode-tab" id="tabQuiz">クイズ</button>
+      <button class="mode-tab" id="tabZukan">一族ずかん</button>
+      <button class="mode-tab" id="tabNenpyo">年表</button>
     </div>
 
     <div class="ask-zone" id="askZone">
@@ -316,6 +395,20 @@
       <div class="choices" id="choices"></div>
       <div class="quiz-next-row">
         <button class="btn-next hidden" id="nextBtn">つぎの問題 ▶</button>
+      </div>
+    </div>
+
+    <div class="zukan-zone hidden" id="zukanZone">
+      <div class="zone-lead">▼ 人物をタップすると、清盛がその人のことを話します（金ぶち＝平氏／青ぶち＝源氏）</div>
+      <div class="zukan-grid" id="zukanGrid"></div>
+    </div>
+
+    <div class="nenpyo-zone hidden" id="nenpyoZone">
+      <div class="zone-lead">▼ 出来事をタップすると、清盛がそのときのことを話します</div>
+      <div class="nenpyo-line" id="nenpyoLine"></div>
+      <div class="nenpyo-legend">
+        <span class="lg"><span class="sw up"></span>栄えていくとき</span>
+        <span class="lg"><span class="sw down"></span>おとろえていくとき</span>
       </div>
     </div>
   </main>
@@ -834,20 +927,37 @@ const NOT_FOUND = [
 
 const GREET = "やあ、わしが平清盛(たいらのきよもり)じゃ！　平安の世の終わりを生き、武士で初めて世の中の頂点に立った男よ。聞きたいことを下のますに入力して、リターンを押すか「きく」ボタンを押すがよい。なんでも答えてやろうぞ！";
 
-// ===== タイプライター表示 =====
+// ===== タイプライター表示 + 口パク =====
 const answerEl = document.getElementById('answer');
 const faceEl = document.getElementById('face');
 let typing=null;
+
+// --- 口パク（揺れなし。口の絵だけを開け閉めする）---
+let mouthTimer=null;
+function startMouth(){
+  stopMouth();
+  mouthTimer=setInterval(()=>{ faceEl.classList.toggle('talking-open'); },130);
+}
+function stopMouth(){
+  if(mouthTimer){ clearInterval(mouthTimer); mouthTimer=null; }
+  faceEl.classList.remove('talking-open');  // 最後は口を閉じた絵にもどす
+}
+
 function speak(text){
-  faceEl.classList.remove('talk'); void faceEl.offsetWidth; faceEl.classList.add('talk');
   if(typing) clearInterval(typing);
+  startMouth();                 // しゃべりはじめ：口を動かす
   answerEl.innerHTML="";
   let i=0;
   const cursor=document.createElement('span');
   cursor.className='cursor'; cursor.textContent='　';
   answerEl.appendChild(cursor);
   typing=setInterval(()=>{
-    if(i>=text.length){clearInterval(typing); cursor.remove(); return;}
+    if(i>=text.length){
+      clearInterval(typing); typing=null;
+      cursor.remove();
+      stopMouth();              // しゃべりおわり：口を止める
+      return;
+    }
     const ch=document.createTextNode(text[i]);
     answerEl.insertBefore(ch,cursor);
     i++;
@@ -934,9 +1044,17 @@ function showQuestion(){
   // 選択肢をシャッフルして表示
   const order=shuffle([0,1,2]);
   choicesEl.innerHTML="";
-  // 問題文を吹き出しに
-  faceEl.classList.remove('talk'); void faceEl.offsetWidth; faceEl.classList.add('talk');
-  answerEl.textContent="【第"+(quizIndex+1)+"問】"+item.q;
+  // 問題文を吹き出しに（揺れなし・口パクで出題）
+  if(typing){ clearInterval(typing); typing=null; }
+  answerEl.innerHTML="";
+  const qtext="【第"+(quizIndex+1)+"問】"+item.q;
+  startMouth();
+  let qi=0;
+  typing=setInterval(()=>{
+    if(qi>=qtext.length){ clearInterval(typing); typing=null; stopMouth(); return; }
+    answerEl.appendChild(document.createTextNode(qtext[qi]));
+    qi++;
+  },28);
   order.forEach(ci=>{
     const btn=document.createElement('button');
     btn.className='choice';
@@ -1002,21 +1120,125 @@ function finishQuiz(){
   choicesEl.appendChild(again);
 }
 
-// ===== モード切替 =====
+// ===== 平氏一族ずかん（家系図）データ =====
+const ZUKAN=[
+  {name:"平清盛", rel:"主役・本人", side:"heishi",
+   talk:"わしが平清盛じゃ！　伊勢平氏のあとつぎとして生まれ、武士で初めて太政大臣となり、宋との貿易や港づくりで国を豊かにした。天皇のおじいさんにまでなった男よ。"},
+  {name:"平忠盛", rel:"父", side:"heishi",
+   talk:"わしの父・忠盛(ただもり)じゃ。海ぞいの土地と西国とのつながりで力をたくわえ、武士でありながら天皇の御殿に上がることを許された。平氏が世に出る土台をきずいた人物よ。"},
+  {name:"池禅尼", rel:"継母", side:"heishi",
+   talk:"継母(ままはは)の池禅尼(いけのぜんに)じゃ。心やさしい人でな。わしが敵の子・源頼朝の命を助けたのも、この人の願いがあったからじゃ。その情けが、のちの世を動かすことになるとはのう……。"},
+  {name:"平時子", rel:"妻", side:"heishi",
+   talk:"わしの妻・時子(ときこ)じゃ。賢くしっかりした女性で、わしを長く支えてくれた。妹や親せきも朝廷や上皇に仕えており、その縁(えん)がわしの力にもなったのじゃ。"},
+  {name:"平重盛", rel:"長男", side:"heishi",
+   talk:"長男の重盛(しげもり)じゃ。まじめで思いやりがあり、人びとに慕われた立派な男でな。わしと後白河法皇の対立を、あいだに立って何度も丸くおさめてくれた。じゃがわしより先に病で逝(い)ってしもうた……。"},
+  {name:"平宗盛", rel:"三男・あとつぎ", side:"heishi",
+   talk:"三男の宗盛(むねもり)じゃ。長男の重盛が先に亡くなったので、わしのあとを継いで平氏の棟梁(かしら)となった。わしの死後、源氏との苦しい戦いを背おうことになったのじゃ。"},
+  {name:"平知盛", rel:"子(武将)", side:"heishi",
+   talk:"子の知盛(とももり)じゃ。たいへん優れた武将でな、源氏との戦いでも勇かんに戦った。最後は壇ノ浦の戦いで、いさぎよく海に身を投げたと伝わる。りりしい男であった。"},
+  {name:"平徳子", rel:"娘・天皇のきさき", side:"heishi",
+   talk:"娘の徳子(とくこ)じゃ。高倉天皇のきさき(妻)となり、のちに建礼門院(けんれいもんいん)とよばれた。徳子が産んだ子が安徳天皇よ。わしはこうして天皇の親せきとなったのじゃ。"},
+  {name:"安徳天皇", rel:"孫(天皇)", side:"heishi",
+   talk:"わしの孫・安徳天皇じゃ。娘の徳子が産んだ子でな、ほんの幼いころに天皇となった。じゃが壇ノ浦の戦いのとき、わずか数えで8歳ほどで海に沈むという、悲しい運命をたどったのじゃ……。"},
+  {name:"平時忠", rel:"妻の弟(義弟)", side:"heishi",
+   talk:"妻・時子の弟、時忠(ときただ)じゃ。「平家(平氏)にあらずんば人にあらず」と言ったとされるのがこの男よ。それほど平氏の力は大きかった。じゃが、そのおごりが多くの敵を生んだのじゃ。"},
+  {name:"源義朝", rel:"源氏・平治の乱の敵", side:"genji",
+   talk:"源義朝(よしとも)は、平治の乱でわしと戦った源氏の武将じゃ。わしが破り、彼は落ちのびる途中で命を落とした。その子らが、のちにわしの一族をほろぼすことになるとはのう。"},
+  {name:"源頼朝", rel:"源氏・義朝の子", side:"genji",
+   talk:"源頼朝(よりとも)は、わしが平治の乱で破った義朝の子じゃ。本来なら命をうばうところを、継母の願いもあって伊豆へ流すにとどめた。その頼朝が兵をあげ、わしの死後に平氏をほろぼすのじゃ。情けが仇(あだ)になる、とはこのことよ。"},
+  {name:"源義経", rel:"源氏・頼朝の弟", side:"genji",
+   talk:"源義経(よしつね)は、義朝の子で頼朝の弟じゃ。わしが幼い命を助けて寺に預けたのじゃが、のちに兄に味方し、壇ノ浦で平氏をやぶる大かつやくをする。わしの情けが、めぐって平氏の運命を決めたのよ。"}
+];
+
+// ===== 栄えとほろび 年表データ =====
+const NENPYO=[
+  {year:"1118年", title:"清盛 生まれる", trend:"up",
+   talk:"1118年、わしはこの世に生まれた。伊勢国(いまの三重県)で生まれたという説が有力じゃ。平安時代の終わりごろ、武士がぐんぐん力をつけはじめたころよ。"},
+  {year:"1153年", title:"平氏の棟梁になる", trend:"up",
+   talk:"1153年、父・忠盛が亡くなり、わしが平氏一門の棟梁(とうりょう=かしら)となった。ここからわしは、世の表舞台へと進んでいくのじゃ。"},
+  {year:"1156年", title:"保元の乱に勝つ", trend:"up",
+   talk:"1156年の保元の乱では、後白河天皇の側について勝利に力をかした。武士の力なしには世がおさまらぬ、とはっきりした戦いよ。"},
+  {year:"1159年", title:"平治の乱に勝つ", trend:"up",
+   talk:"1159年の平治の乱で、わしは源義朝らを破った。源氏の有力者が力を失い、わしは武士の中の第一人者となったのじゃ。"},
+  {year:"1167年", title:"太政大臣になる", trend:"up",
+   talk:"1167年、わしは武士で初めて太政大臣(だいじょうだいじん)になった。朝廷でいちばん高い位じゃ。世の中をおどろかせた、大きなできごとであったのう。"},
+  {year:"1171年", title:"娘を天皇のきさきに", trend:"up",
+   talk:"娘の徳子を高倉天皇のきさき(妻)とした。やがてその子・安徳天皇が生まれ、わしは天皇のおじいさんに。平氏の栄えは、まさにここで頂点に近づいたのじゃ。"},
+  {year:"1177年", title:"鹿ケ谷の陰謀", trend:"down",
+   talk:"1177年、後白河法皇に近い者たちが平氏をたおそうとした、という鹿ケ谷(ししがたに)の陰謀があった。法皇との間が、いよいよあやうくなってきたのじゃ。ここから雲ゆきが変わる。"},
+  {year:"1179年", title:"後白河法皇を幽閉", trend:"down",
+   talk:"1179年、わしはついに兵をひきいて、後白河法皇を鳥羽殿に閉じこめた。政治の実権をすべてにぎる思いきった手じゃったが、これがまた多くの敵を生むことになったのじゃ。"},
+  {year:"1180年", title:"以仁王の挙兵・福原遷都", trend:"down",
+   talk:"1180年、以仁王(もちひとおう)が『平氏をたおせ』と呼びかけ、各地で源氏が立ちあがった。わしは都を福原へ移そうとしたが反対が強く、半年でもどす。富士川では平氏が退き、おとろえが世に知れたのじゃ。"},
+  {year:"1181年", title:"清盛 死す", trend:"down",
+   talk:"1181年、わしははげしい熱の病にたおれ、64歳で世を去った。志(こころざし)なかばでな……。わしの死後、平氏を支える大きな柱が一本、たおれたのじゃ。"},
+  {year:"1185年", title:"壇ノ浦で平氏ほろぶ", trend:"down",
+   talk:"そして1185年、壇ノ浦の戦いに敗れ、平氏はついにほろびた。幼い安徳天皇も海に沈んだ。さかえた者もいつかはおとろえる――『平家物語』が語るとおりの結末であったのじゃ。"}
+];
+
+const zukanGrid=document.getElementById('zukanGrid');
+const nenpyoLine=document.getElementById('nenpyoLine');
+let zukanBuilt=false, nenpyoBuilt=false;
+
+function buildZukan(){
+  if(zukanBuilt) return;
+  ZUKAN.forEach(p=>{
+    const el=document.createElement('div');
+    el.className='person'+(p.side==='genji'?' genji':'');
+    el.innerHTML='<div class="pname">'+p.name+'</div><div class="prel">'+p.rel+'</div>';
+    el.onclick=()=>{
+      zukanGrid.querySelectorAll('.person').forEach(x=>x.classList.remove('on'));
+      el.classList.add('on');
+      speak(p.talk);
+    };
+    zukanGrid.appendChild(el);
+  });
+  zukanBuilt=true;
+}
+
+function buildNenpyo(){
+  if(nenpyoBuilt) return;
+  NENPYO.forEach(ev=>{
+    const el=document.createElement('div');
+    el.className='ev '+ev.trend;
+    el.innerHTML='<span class="yr">'+ev.year+'</span><span class="dot"></span><span class="ev-title">'+ev.title+'</span>';
+    el.onclick=()=>{
+      nenpyoLine.querySelectorAll('.ev').forEach(x=>x.classList.remove('on'));
+      el.classList.add('on');
+      speak(ev.talk);
+    };
+    nenpyoLine.appendChild(el);
+  });
+  nenpyoBuilt=true;
+}
+
+// ===== モード切替（4つ） =====
 const tabAsk=document.getElementById('tabAsk');
 const tabQuiz=document.getElementById('tabQuiz');
+const tabZukan=document.getElementById('tabZukan');
+const tabNenpyo=document.getElementById('tabNenpyo');
 const askZone=document.getElementById('askZone');
 const quizZone=document.getElementById('quizZone');
+const zukanZone=document.getElementById('zukanZone');
+const nenpyoZone=document.getElementById('nenpyoZone');
 
-tabAsk.onclick=()=>{
-  tabAsk.classList.add('active'); tabQuiz.classList.remove('active');
-  askZone.classList.remove('hidden'); quizZone.classList.add('hidden');
-  speak(GREET);
+const TABS=[tabAsk,tabQuiz,tabZukan,tabNenpyo];
+const ZONES=[askZone,quizZone,zukanZone,nenpyoZone];
+
+function switchMode(activeTab, activeZone){
+  TABS.forEach(t=>t.classList.toggle('active', t===activeTab));
+  ZONES.forEach(z=>z.classList.toggle('hidden', z!==activeZone));
+}
+
+tabAsk.onclick=()=>{ switchMode(tabAsk,askZone); speak(GREET); };
+tabQuiz.onclick=()=>{ switchMode(tabQuiz,quizZone); startQuiz(); };
+tabZukan.onclick=()=>{
+  switchMode(tabZukan,zukanZone); buildZukan();
+  speak("これが平氏の一族ずかんじゃ。気になる人物をタップしてみよ。その者のことを、わしが話してやろう。源氏の者(青ぶち)も入れてあるぞ。");
 };
-tabQuiz.onclick=()=>{
-  tabQuiz.classList.add('active'); tabAsk.classList.remove('active');
-  quizZone.classList.remove('hidden'); askZone.classList.add('hidden');
-  startQuiz();
+tabNenpyo.onclick=()=>{
+  switchMode(tabNenpyo,nenpyoZone); buildNenpyo();
+  speak("わしの一生の年表じゃ。金色の点は栄えていくとき、赤い点はおとろえていくとき。出来事をタップすると、そのときのことを話してやろう。");
 };
 
 // ===== 入力イベント =====
